@@ -1,0 +1,12 @@
+lichess bot token: 3JzVWoxIKGGBRORX
+
+functions the lichess interface needs:
+-see challenges
+-choose and accept challenges
+-play moves
+-resign, draw
+
+functions the engine needs:
+-evaluate a position
+-find the best move
+-learn from playing
