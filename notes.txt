@@ -1,5 +1,3 @@
-lichess bot token: 3JzVWoxIKGGBRORX
-
 functions the lichess interface needs:
 -see challenges
 +choose and accept challenges
@@ -31,23 +29,66 @@ _  /   / /_/ /_  /   _  /_/ / /_/ /  __/ / /_/ /_  / / /     _  /___  _  / / /  
 
 internal chess bit notation:
 each square could be 13 different things:
-0 - 0000 - 0 - vacant square
+= - 0000 - 0 - vacant
 
-K - 0001 - 1 - white king
-Q - 0010 - 2 - white queen
-R - 0011 - 3 - white rook
-B - 0100 - 4 - white bishop
-N - 0101 - 5 - white knight
-P - 0110 - 6 - white pawn
+k - 0001 - 1 - black king
+q - 0010 - 2 - black queen
+r - 0011 - 3 - black rook
+b - 0100 - 4 - black bishop
+n - 0101 - 5 - black knight
+p - 0110 - 6 - black pawn
+c - 0111 - 7 - black castle-able rook
 
-? - 0111 - 7
-? - 1000 - 8
+| - 1000 - 8 - en passant
 
-k - 1001 - 9 - black king
-q - 1010 - A - black queen
-r - 1011 - B - black rook
-b - 1100 - C - black bishop
-n - 1101 - D - black knight
-p - 1110 - E - black pawn
+K - 1001 - 9 - white king
+Q - 1010 - A - white queen
+R - 1011 - B - white rook
+B - 1100 - C - white bishop
+N - 1101 - D - white knight
+P - 1110 - E - white pawn
+C - 1111 - F - white castle-able rook
 
-? - 1111 - F
+Until a rook moves, it is designated as "castle-able": meaning it can castle with the king.
+If a rook moves, its value 111 is overwritten with the normal rook value 011.
+If the king moves, both rooks are overwritten with 011, making them unable to castle.
+If a pawn under-promotes to a rook, it is set by default to 011.
+
+If a pawn moves two squares, an "en passant" value 1000 will be written to the square behind it.
+This value will be reverted to an empty square (0000) in the next ply.
+A pawn will be able to "capture" this type of square in the next ply, also removing the pawn infront of it.
+
+The standard starting position:
+
+c n b q k b n c 
+p p p p p p p p 
+= = = = = = = = 
+= = = = = = = = 
+= = = = = = = = 
+= = = = = = = = 
+P P P P P P P P 
+C N B Q K B N C 
+
+
+A typical position:
+
+c n b q k b n c 
+p p p p p p p p 
+= = = = = = = = 
+= = = = = = = = 
+= = = = = = = = 
+= = = = = = = = 
+P P P P P P P P 
+C N B Q K B N C 
+
+
+A position where en passant is possible:
+
+c n b q k b n c 
+p p p p p p p p 
+= = = = = = = = 
+= = = = = = = = 
+= = = = = = = = 
+= = = = = = = = 
+P P P P P P P P 
+C N B Q K B N C 

@@ -6,7 +6,7 @@ int main() {
 }
 
 struct BoardState {
-
+    
 }
 
 int FENToBit
