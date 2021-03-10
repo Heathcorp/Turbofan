@@ -70,25 +70,25 @@ P P P P P P P P
 C N B Q K B N C 
 
 
-A typical position:
+A typical position where castling is not possible for white:
 
 c n b q k b n c 
-p p p p p p p p 
+p p p p = p p p 
 = = = = = = = = 
+= = = = p = = = 
+= = = = P = = = 
 = = = = = = = = 
-= = = = = = = = 
-= = = = = = = = 
-P P P P P P P P 
-C N B Q K B N C 
+P P P P K P P P 
+R N B Q = B N R 
 
 
-A position where en passant is possible:
+A position where en passant is possible for black:
 
 c n b q k b n c 
-p p p p p p p p 
+p p = p = p p p 
 = = = = = = = = 
-= = = = = = = = 
-= = = = = = = = 
-= = = = = = = = 
-P P P P P P P P 
-C N B Q K B N C 
+= = = = p = = = 
+= P p P P = = = 
+= = = | = N = = 
+P = P = = P P P 
+C N B Q K B = C 
