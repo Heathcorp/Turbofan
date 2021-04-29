@@ -2,7 +2,7 @@ const fs = require("fs");
 const fetch = require('node-fetch');
 const readline = require('readline');
 
-const personalToken = JSON.parse(fs.readFileSync("./token.json")).token; //secret lichess api token, token.json is ignored by git
+const personalToken = JSON.parse(fs.readFileSync("auth.json")).token; //secret lichess api token, token.json is ignored by git
 const botPlayerId = "turbofan";
 
 const maxGames = 1;
