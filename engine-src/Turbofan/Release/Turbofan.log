@@ -1,0 +1,7 @@
+﻿  Turbofan.cpp
+C:\Users\Heath Manning\Coding Projects\Turbofan\engine-src\Turbofan\Turbofan.cpp(4,1): warning C4326: return type of 'main' should be 'int' instead of 'void'
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 11 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  Turbofan.vcxproj -> C:\Users\Heath Manning\Coding Projects\Turbofan\engine-src\Turbofan\Release\Turbofan.exe

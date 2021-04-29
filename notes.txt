@@ -27,6 +27,14 @@ _  /   / /_/ /_  /   _  /_/ / /_/ /  __/ / /_/ /_  / / /     _  /___  _  / / /  
 /_/  \__,_/_/  /_.___/\____/_/  \__,_/_/ /_/  /_____/_/ /_/\__, /_/_/ /_/\___/ 
                                                           /____/               
 
+NEW PLAN:
+Each "node" consists of a board position and the moves taken to reach that position
+Board positions are represented probably the same as stockfish's bitboards
+Stockfish's move format is also pretty good
+
+
+NOTE: BELOW IS DEPRECATED AFTER READING HOW STOCKFISH REPRESENTS CHESS POSITIONS
+
 internal chess bit notation:
 each square could be 13 different things:
 = - 0000 - 0 - vacant
@@ -92,3 +100,4 @@ p p = p = p p p
 = = = | = N = = 
 P = P = = P P P 
 C N B Q K B = C 
+
