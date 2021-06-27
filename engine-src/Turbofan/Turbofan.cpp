@@ -1,16 +1,20 @@
 #include <iostream>
-#include "BoardState.h"
+#include "MoveTree.h"
 
 int main()
 {
-	//todo: fix ply structure maybe make its own class with a proper constructor idk
+	//todo: 
 
 	Turbofan::BoardState testBoard;
 	testBoard.setFromFEN((char*)"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 	std::cout << sizeof(testBoard) << std::endl;
 
-	Turbofan::Ply testPly = { 1, 50, 0x1b, 0 };
+	Turbofan::MoveTree testTree(testBoard);
+
+	Turbofan::Ply testPly(1, 18, true, false, 11, 0);
 	std::cout << sizeof(testPly) << std::endl;
+
+	Turbofan::MoveTree::Node* testNode = testTree.rootNode->AddChild(testPly);
 
 	std::cout << testBoard << std::endl;
 	testBoard.makeMove(testPly);

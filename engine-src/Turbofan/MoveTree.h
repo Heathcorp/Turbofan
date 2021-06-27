@@ -6,6 +6,9 @@ namespace Turbofan
 
 	class MoveTree
 	{
+	private:
+		BoardState initialState;
+	public:
 		class Node
 		{
 		private:
@@ -23,9 +26,7 @@ namespace Turbofan
 			Node* AddChild(Ply ply);
 		};
 
-	private:
 		Node* rootNode;
-		BoardState initialState;
 	public:
 		MoveTree(BoardState startingBoard);
 		~MoveTree();

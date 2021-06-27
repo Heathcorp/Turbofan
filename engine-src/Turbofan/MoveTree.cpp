@@ -6,7 +6,7 @@ namespace Turbofan
 	{
 		parent = nullptr;
 
-		lastPly = { 0, 0, 0 };
+		lastPly = Ply();
 	}
 	MoveTree::Node::Node(Node* parentNode, Ply ply)
 	{

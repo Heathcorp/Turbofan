@@ -12,11 +12,14 @@ namespace Turbofan
 		uint8_t to : 8;
 
 		uint8_t capturedPiece : 4;
-		uint8_t capture : 1;
+		bool capture : 1;
 		uint8_t : 3;
 		uint8_t promotionPiece : 4;
-		uint8_t promotion : 1;
+		bool promotion : 1;
 		uint8_t : 3;
+
+		Ply(uint8_t fromSquare, uint8_t toSquare, bool isCapture, bool isPromotion, uint8_t pieceCaptured, uint8_t promotedPiece);
+		Ply();
 
 		friend std::ostream& operator<< (std::ostream& os, const Ply& ply);
 	};

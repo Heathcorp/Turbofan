@@ -2,6 +2,25 @@
 
 namespace Turbofan
 {
+	Ply::Ply(uint8_t fromSquare, uint8_t toSquare, bool isCapture, bool isPromotion, uint8_t pieceCaptured, uint8_t promotedPiece)
+	{
+		from = fromSquare;
+		to = toSquare;
+		capture = isCapture;
+		promotion = isPromotion;
+		capturedPiece = pieceCaptured;
+		promotionPiece = promotedPiece;
+	}
+
+	Ply::Ply()
+	{
+		from = 0;
+		to = 0;
+		capture = 0;
+		promotion = 0;
+		capturedPiece = 0;
+		promotionPiece = 0;
+	}
 	
 	BoardState::BoardState()
 	{
