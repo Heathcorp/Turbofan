@@ -57,11 +57,11 @@ namespace Turbofan
 
 		std::vector<Ply> legalMoves;
 
-		void generateLegalMoves();
-
 	public:
 		BoardState();
 		~BoardState();
+
+		void generateLegalMoves();
 
 		void makeMove(Ply ply);
 		void undoMove(Ply ply);

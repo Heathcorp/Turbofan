@@ -14,10 +14,13 @@ int main()
 	Turbofan::Ply testPly(1, 18, true, false, 11, 0);
 	std::cout << sizeof(testPly) << std::endl;
 
+	testBoard.generateLegalMoves();
+
 	Turbofan::MoveTree::Node* testNode = testTree.rootNode->AddChild(testPly);
 
 	std::cout << testBoard << std::endl;
 	testBoard.makeMove(testPly);
+	std::cout << testPly << std::endl;
 	std::cout << testBoard << std::endl;
 	testBoard.undoMove(testPly);
 	std::cout << testBoard << std::endl;

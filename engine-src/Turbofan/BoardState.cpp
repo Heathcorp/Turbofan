@@ -72,6 +72,8 @@ namespace Turbofan
 				break;
 			}
 		}
+
+		plyNumber++;
 	}
 	// actually tricky
 	//no promotion support yet either
@@ -94,6 +96,8 @@ namespace Turbofan
 		{
 			piecesArray[ply.capturedPiece] |= toChange;
 		}
+
+		plyNumber--;
 	}
 
 	void BoardState::setFromFEN(char* FEN)
@@ -207,12 +211,186 @@ namespace Turbofan
 	}
 	std::ostream& operator<<(std::ostream& os, const Ply& ply)
 	{
-		os << "Move:" << std::endl << "From: " << (int)ply.from << std::endl << "To: " << (int)ply.to << std::endl;
+		os << "Move piece from " << (char)((int)'a' + (int)ply.from % 8) << 1 + (int)ply.from / 8 << " to " << (char)((int)'a' + (int)ply.to % 8) << 1 + (int)ply.to / 8 << std::endl;
 		return os;
 	}
 
 	void BoardState::generateLegalMoves()
 	{
+		std::vector<Ply> candidateMoves;
+		//player is the side looking to play a move
+		//enemy is the side which just made a move
+		uint64_t whitePieces = pieces.wKing | pieces.wQueen | pieces.wRook | pieces.wBishop | pieces.wKnight | pieces.wPawn;
+		uint64_t blackPieces = pieces.bKing | pieces.bQueen | pieces.bRook | pieces.bBishop | pieces.bKnight | pieces.bPawn;
+		uint64_t allPieces = whitePieces | blackPieces;
 		
+		bool isWhite = ~(plyNumber % 2);
+
+		/*union
+		{
+			BoardState::Pieces tempPieces;
+			uint64_t tempPieceArray[12];
+		};
+		tempPieces = pieces;*/
+
+		//working masks used multiple times
+		uint64_t attackedSquare;
+		uint64_t currentSquare = 1;
+		if (isWhite)
+		{
+			for (unsigned int i = 0; i < 64; i++)
+			{
+				int x = i % 8;
+				int y = i / 8;
+
+				if (pieces.wPawn & currentSquare)
+				{
+					//todo: add en-passant and capture-promotions, maybe make more elegant?
+
+					//pawn forward-moves
+					if (!((currentSquare << 8) & allPieces))
+					{
+						if (i / 8 == 6)
+						{
+							//promotion
+							for (unsigned int j = 1; j < 5; j++)
+							{
+								candidateMoves.push_back(Ply(i, i + 8, false, true, 0, j));
+							}
+						}
+						else
+						{
+							//single pawn move
+							candidateMoves.push_back(Ply(i, i + 8, false, false, 0, 0));
+
+							//double pawn move
+							if ((i / 8 == 1) && !((currentSquare << 16) & blackPieces & whitePieces))
+							{
+								candidateMoves.push_back(Ply(i, i + 16, false, false, 0, 0));
+							}
+						}
+						
+					}
+					
+					//captures
+					attackedSquare = (currentSquare << 7);
+					if ((i % 8 != 0) && (attackedSquare & blackPieces))
+					{
+						for (unsigned int j = 7; j < 12; j++)
+						{
+							if (piecesArray[j] & attackedSquare)
+							{
+								candidateMoves.push_back(Ply(i, i + 7, true, false, j, 0));
+								break;
+							}
+						}
+					}
+					attackedSquare = (currentSquare << 9);
+					if ((i % 8 != 7) && (attackedSquare & blackPieces))
+					{
+						for (unsigned int j = 7; j < 12; j++)
+						{
+							if (piecesArray[j] & attackedSquare)
+							{
+								candidateMoves.push_back(Ply(i, i + 9, true, false, j, 0));
+								break;
+							}
+						}
+					}
+				}
+				else if (pieces.wKnight & currentSquare)
+				{
+					int offsets[8] = { -17, -15, -10, -6, 6, 10, 15, 17 };
+					for (unsigned int k = 0; k < 8; k++)
+					{
+						int p = ((int)i + offsets[k]);
+
+						if (p < 64 && p >= 0)
+						{
+							int px = p % 8;
+							int py = p / 8;
+
+							if ((abs(px - x) == 2 && abs(py - y) == 1) || (abs(px - x) == 1 && abs(py - y) == 2))
+							{
+								attackedSquare = (uint64_t)1 << p;
+								if (attackedSquare & blackPieces)
+								{
+									for (unsigned int j = 7; j < 12; j++)
+									{
+										if (piecesArray[j] & attackedSquare)
+										{
+											candidateMoves.push_back(Ply(i, (uint64_t)p, true, false, j, 0));
+											break;
+										}
+									}
+								}
+								else if (!(attackedSquare & allPieces))
+								{
+									candidateMoves.push_back(Ply(i, (uint64_t)p, false, false, 0, 0));
+								}
+							}
+						}
+					}
+				}
+				else if (pieces.wBishop & currentSquare)
+				{
+
+				}
+				else if (pieces.wRook & currentSquare)
+				{
+
+				}
+				else if (pieces.wQueen & currentSquare)
+				{
+
+				}
+				else if (pieces.wKing & currentSquare)
+				{
+
+				}
+
+				//next square
+				currentSquare <<= 1;
+			}
+		}
+		else
+		{
+			for (unsigned int i = 0; i < 64; i++)
+			{
+				if (pieces.bPawn & currentSquare)
+				{
+					
+				}
+				else if (pieces.bKnight & currentSquare)
+				{
+
+				}
+				else if (pieces.bBishop & currentSquare)
+				{
+
+				}
+				else if (pieces.bRook & currentSquare)
+				{
+
+				}
+				else if (pieces.bQueen & currentSquare)
+				{
+
+				}
+				else if (pieces.bKing & currentSquare)
+				{
+
+				}
+
+				//next square
+				currentSquare <<= 1;
+			}
+		}
+
+		std::cout << "Found " << candidateMoves.size() << " candidate moves" << std::endl;
+		for (unsigned int i = 0; i < candidateMoves.size(); i++)
+		{
+			std::cout << candidateMoves.at(i);
+		}
 	}
 }
