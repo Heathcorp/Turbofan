@@ -55,9 +55,10 @@ namespace Turbofan
 		uint16_t plyNumber; // currently plyNumber's parity tells me whether it's white or black's move to save memory
 		
 
-		std::vector<Ply> legalMoves;
 
 	public:
+		std::vector<Ply> legalMoves;
+
 		BoardState();
 		~BoardState();
 

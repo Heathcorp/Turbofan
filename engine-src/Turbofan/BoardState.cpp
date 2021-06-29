@@ -73,6 +73,7 @@ namespace Turbofan
 			}
 		}
 
+		legalMoves.clear();
 		plyNumber++;
 	}
 	// actually tricky
@@ -97,6 +98,7 @@ namespace Turbofan
 			piecesArray[ply.capturedPiece] |= toChange;
 		}
 
+		legalMoves.clear();
 		plyNumber--;
 	}
 
@@ -211,12 +213,15 @@ namespace Turbofan
 	}
 	std::ostream& operator<<(std::ostream& os, const Ply& ply)
 	{
-		os << "Move piece from " << (char)((int)'a' + (int)ply.from % 8) << 1 + (int)ply.from / 8 << " to " << (char)((int)'a' + (int)ply.to % 8) << 1 + (int)ply.to / 8 << std::endl;
+		os << (char)((int)'a' + (int)ply.from % 8) << 1 + (int)ply.from / 8 << (ply.capture ? " takes " : " to ") << (char)((int)'a' + (int)ply.to % 8) << 1 + (int)ply.to / 8 << std::endl;
 		return os;
 	}
 
 	void BoardState::generateLegalMoves()
 	{
+		//todo: redo completely with bitboards properly
+		//this was made quick and dirty for a chess meet up where I wanted it to play against Ben Shaw, this made me just copy/paste stuff around till it worked
+		//more lines than a Miami strip club in the 80s
 		std::vector<Ply> candidateMoves;
 		//player is the side looking to play a move
 		//enemy is the side which just made a move
@@ -224,7 +229,7 @@ namespace Turbofan
 		uint64_t blackPieces = pieces.bKing | pieces.bQueen | pieces.bRook | pieces.bBishop | pieces.bKnight | pieces.bPawn;
 		uint64_t allPieces = whitePieces | blackPieces;
 		
-		bool isWhite = ~(plyNumber % 2);
+		bool isWhite = ((plyNumber+1) % 2);
 
 		/*union
 		{
@@ -264,7 +269,7 @@ namespace Turbofan
 							candidateMoves.push_back(Ply(i, i + 8, false, false, 0, 0));
 
 							//double pawn move
-							if ((i / 8 == 1) && !((currentSquare << 16) & blackPieces & whitePieces))
+							if ((i / 8 == 1) && !((currentSquare << 16) & allPieces))
 							{
 								candidateMoves.push_back(Ply(i, i + 16, false, false, 0, 0));
 							}
@@ -298,7 +303,7 @@ namespace Turbofan
 						}
 					}
 				}
-				else if (pieces.wKnight & currentSquare)
+				if (pieces.wKnight & currentSquare)
 				{
 					int offsets[8] = { -17, -15, -10, -6, 6, 10, 15, 17 };
 					for (unsigned int k = 0; k < 8; k++)
@@ -332,21 +337,284 @@ namespace Turbofan
 						}
 					}
 				}
-				else if (pieces.wBishop & currentSquare)
+				if (pieces.wBishop & currentSquare || pieces.wQueen & currentSquare)
 				{
+					int dx = x - 1;
+					int dy = y - 1;
+					int p = i - 9;
+					attackedSquare = currentSquare;
 
+					//- - diagonal
+					while (dx >= 0 && dy >= 0)
+					{
+						attackedSquare >>= 9;
+						p = dx + dy * 8;
+						if (attackedSquare & allPieces)
+						{
+							if (attackedSquare & blackPieces)
+							{
+								for (unsigned int j = 7; j < 12; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+
+						candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+						
+						dx--;
+						dy--;
+					}
+
+					dx = x + 1;
+					dy = y - 1;
+					attackedSquare = currentSquare;
+					//+ - diagonal
+					while (dx < 8 && dy >= 0)
+					{
+						attackedSquare >>= 7;
+						p = dx + dy * 8;
+						if (attackedSquare & allPieces)
+						{
+							if (attackedSquare & blackPieces)
+							{
+								for (unsigned int j = 7; j < 12; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+
+						candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+						dx++;
+						dy--;
+					}
+
+					dx = x - 1;
+					dy = y + 1;
+					attackedSquare = currentSquare;
+					//- + diagonal
+					while (dx >= 0 && dy < 8)
+					{
+						attackedSquare <<= 7;
+						p = dx + dy * 8;
+						if (attackedSquare & allPieces)
+						{
+							if (attackedSquare & blackPieces)
+							{
+								for (unsigned int j = 7; j < 12; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+
+						candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+						dx--;
+						dy++;
+					}
+
+					dx = x + 1;
+					dy = y + 1;
+					attackedSquare = currentSquare;
+					//+ + diagonal
+					while (dx < 8 && dy < 8)
+					{
+						attackedSquare <<= 9;
+						p = dx + dy * 8;
+						if (attackedSquare & allPieces)
+						{
+							if (attackedSquare & blackPieces)
+							{
+								for (unsigned int j = 7; j < 12; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+
+						candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+						dx++;
+						dy++;
+					}
 				}
-				else if (pieces.wRook & currentSquare)
+				if (pieces.wRook & currentSquare || pieces.wQueen & currentSquare)
 				{
+					int dx = x - 1;
+					int dy = y;
+					int p = i - 1;
+					attackedSquare = currentSquare;
 
+					//-x
+					while (dx >= 0)
+					{
+						attackedSquare >>= 1;
+						p = dx + dy * 8;
+						if (attackedSquare & allPieces)
+						{
+							if (attackedSquare & blackPieces)
+							{
+								for (unsigned int j = 7; j < 12; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+
+						candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+						dx--;
+					}
+
+					dx = x + 1;
+					dy = y;
+					attackedSquare = currentSquare;
+					//+x
+					while (dx < 8)
+					{
+						attackedSquare <<= 1;
+						p = dx + dy * 8;
+						if (attackedSquare & allPieces)
+						{
+							if (attackedSquare & blackPieces)
+							{
+								for (unsigned int j = 7; j < 12; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+
+						candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+						dx++;
+					}
+
+					dx = x;
+					dy = y - 1;
+					attackedSquare = currentSquare;
+					//-y
+					while (dy >= 0)
+					{
+						attackedSquare >>= 8;
+						p = dx + dy * 8;
+						if (attackedSquare & allPieces)
+						{
+							if (attackedSquare & blackPieces)
+							{
+								for (unsigned int j = 7; j < 12; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+
+						candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+						dy--;
+					}
+
+					dx = x;
+					dy = y + 1;
+					attackedSquare = currentSquare;
+					//+y
+					while (dy < 8)
+					{
+						attackedSquare <<= 8;
+						p = dx + dy * 8;
+						if (attackedSquare & allPieces)
+						{
+							if (attackedSquare & blackPieces)
+							{
+								for (unsigned int j = 7; j < 12; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							break;
+						}
+
+						candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+						dy++;
+					}
 				}
-				else if (pieces.wQueen & currentSquare)
+				if (pieces.wKing & currentSquare)
 				{
+					//no castling
+					int offsets[8] = { -9, -8, -7, -1, 1, 7, 8, 9 };
+					for (unsigned int k = 0; k < 8; k++)
+					{
+						int p = ((int)i + offsets[k]);
 
-				}
-				else if (pieces.wKing & currentSquare)
-				{
+						if (p < 64 && p >= 0)
+						{
+							int px = p % 8;
+							int py = p / 8;
 
+							if ((abs(px - x) == 1 && abs(py - y) == 1) || (abs(px - x) == 0 && abs(py - y) == 1) || (abs(px - x) == 1 && abs(py - y) == 0))
+							{
+								attackedSquare = (uint64_t)1 << p;
+								if (attackedSquare & blackPieces)
+								{
+									for (unsigned int j = 7; j < 12; j++)
+									{
+										if (piecesArray[j] & attackedSquare)
+										{
+											candidateMoves.push_back(Ply(i, (uint64_t)p, true, false, j, 0));
+											break;
+										}
+									}
+								}
+								else if (!(attackedSquare & allPieces))
+								{
+									candidateMoves.push_back(Ply(i, (uint64_t)p, false, false, 0, 0));
+								}
+							}
+						}
+					}
 				}
 
 				//next square
@@ -355,42 +623,392 @@ namespace Turbofan
 		}
 		else
 		{
-			for (unsigned int i = 0; i < 64; i++)
+		for (unsigned int i = 0; i < 64; i++)
+		{
+			int x = i % 8;
+			int y = i / 8;
+
+			if (pieces.bPawn & currentSquare)
 			{
-				if (pieces.bPawn & currentSquare)
+				//todo: add en-passant and capture-promotions, maybe make more elegant?
+
+				//pawn forward-moves
+				if (!((currentSquare >> 8) & allPieces))
 				{
-					
-				}
-				else if (pieces.bKnight & currentSquare)
-				{
+					if (i / 8 == 1)
+					{
+						//promotion
+						for (unsigned int j = 7; j < 11; j++)
+						{
+							candidateMoves.push_back(Ply(i, i - 8, false, true, 0, j));
+						}
+					}
+					else
+					{
+						//single pawn move
+						candidateMoves.push_back(Ply(i, i - 8, false, false, 0, 0));
+
+						//double pawn move
+						if ((i / 8 == 6) && !((currentSquare >> 16) & allPieces))
+						{
+							candidateMoves.push_back(Ply(i, i - 16, false, false, 0, 0));
+						}
+					}
 
 				}
-				else if (pieces.bBishop & currentSquare)
+
+				//captures
+				attackedSquare = (currentSquare >> 9);
+				if ((i % 8 != 0) && (attackedSquare & whitePieces))
 				{
-
+					for (unsigned int j = 1; j < 6; j++)
+					{
+						if (piecesArray[j] & attackedSquare)
+						{
+							candidateMoves.push_back(Ply(i, i - 9, true, false, j, 0));
+							break;
+						}
+					}
 				}
-				else if (pieces.bRook & currentSquare)
+				attackedSquare = (currentSquare >> 7);
+				if ((i % 8 != 7) && (attackedSquare & whitePieces))
 				{
-
+					for (unsigned int j = 1; j < 6; j++)
+					{
+						if (piecesArray[j] & attackedSquare)
+						{
+							candidateMoves.push_back(Ply(i, i - 7, true, false, j, 0));
+							break;
+						}
+					}
 				}
-				else if (pieces.bQueen & currentSquare)
-				{
-
-				}
-				else if (pieces.bKing & currentSquare)
-				{
-
-				}
-
-				//next square
-				currentSquare <<= 1;
 			}
+			if (pieces.bKnight & currentSquare)
+			{
+				int offsets[8] = { -17, -15, -10, -6, 6, 10, 15, 17 };
+				for (unsigned int k = 0; k < 8; k++)
+				{
+					int p = ((int)i + offsets[k]);
+
+					if (p < 64 && p >= 0)
+					{
+						int px = p % 8;
+						int py = p / 8;
+
+						if ((abs(px - x) == 2 && abs(py - y) == 1) || (abs(px - x) == 1 && abs(py - y) == 2))
+						{
+							attackedSquare = (uint64_t)1 << p;
+							if (attackedSquare & whitePieces)
+							{
+								for (unsigned int j = 1; j < 6; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, (uint64_t)p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							else if (!(attackedSquare & allPieces))
+							{
+								candidateMoves.push_back(Ply(i, (uint64_t)p, false, false, 0, 0));
+							}
+						}
+					}
+				}
+			}
+			if (pieces.bBishop & currentSquare || pieces.bQueen & currentSquare)
+			{
+				int dx = x - 1;
+				int dy = y - 1;
+				int p = i - 9;
+				attackedSquare = currentSquare;
+
+				//- - diagonal
+				while (dx >= 0 && dy >= 0)
+				{
+					attackedSquare >>= 9;
+					p = dx + dy * 8;
+					if (attackedSquare & allPieces)
+					{
+						if (attackedSquare & whitePieces)
+						{
+							for (unsigned int j = 1; j < 6; j++)
+							{
+								if (piecesArray[j] & attackedSquare)
+								{
+									candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+									break;
+								}
+							}
+						}
+						break;
+					}
+
+					candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+					dx--;
+					dy--;
+				}
+
+				dx = x + 1;
+				dy = y - 1;
+				attackedSquare = currentSquare;
+				//+ - diagonal
+				while (dx < 8 && dy >= 0)
+				{
+					attackedSquare >>= 7;
+					p = dx + dy * 8;
+					if (attackedSquare & allPieces)
+					{
+						if (attackedSquare & whitePieces)
+						{
+							for (unsigned int j = 1; j < 6; j++)
+							{
+								if (piecesArray[j] & attackedSquare)
+								{
+									candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+									break;
+								}
+							}
+						}
+						break;
+					}
+
+					candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+					dx++;
+					dy--;
+				}
+
+				dx = x - 1;
+				dy = y + 1;
+				attackedSquare = currentSquare;
+				//- + diagonal
+				while (dx >= 0 && dy < 8)
+				{
+					attackedSquare <<= 7;
+					p = dx + dy * 8;
+					if (attackedSquare & allPieces)
+					{
+						if (attackedSquare & whitePieces)
+						{
+							for (unsigned int j = 1; j < 6; j++)
+							{
+								if (piecesArray[j] & attackedSquare)
+								{
+									candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+									break;
+								}
+							}
+						}
+						break;
+					}
+
+					candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+					dx--;
+					dy++;
+				}
+
+				dx = x + 1;
+				dy = y + 1;
+				attackedSquare = currentSquare;
+				//+ + diagonal
+				while (dx < 8 && dy < 8)
+				{
+					attackedSquare <<= 9;
+					p = dx + dy * 8;
+					if (attackedSquare & allPieces)
+					{
+						if (attackedSquare & whitePieces)
+						{
+							for (unsigned int j = 1; j < 6; j++)
+							{
+								if (piecesArray[j] & attackedSquare)
+								{
+									candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+									break;
+								}
+							}
+						}
+						break;
+					}
+
+					candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+					dx++;
+					dy++;
+				}
+			}
+			if (pieces.bRook & currentSquare || pieces.bQueen & currentSquare)
+			{
+				int dx = x - 1;
+				int dy = y;
+				int p = i - 1;
+				attackedSquare = currentSquare;
+
+				//-x
+				while (dx >= 0)
+				{
+					attackedSquare >>= 1;
+					p = dx + dy * 8;
+					if (attackedSquare & allPieces)
+					{
+						if (attackedSquare & whitePieces)
+						{
+							for (unsigned int j = 1; j < 6; j++)
+							{
+								if (piecesArray[j] & attackedSquare)
+								{
+									candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+									break;
+								}
+							}
+						}
+						break;
+					}
+
+					candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+					dx--;
+				}
+
+				dx = x + 1;
+				dy = y;
+				attackedSquare = currentSquare;
+				//+x
+				while (dx < 8)
+				{
+					attackedSquare <<= 1;
+					p = dx + dy * 8;
+					if (attackedSquare & allPieces)
+					{
+						if (attackedSquare & whitePieces)
+						{
+							for (unsigned int j = 1; j < 6; j++)
+							{
+								if (piecesArray[j] & attackedSquare)
+								{
+									candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+									break;
+								}
+							}
+						}
+						break;
+					}
+
+					candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+					dx++;
+				}
+
+				dx = x;
+				dy = y - 1;
+				attackedSquare = currentSquare;
+				//-y
+				while (dy >= 0)
+				{
+					attackedSquare >>= 8;
+					p = dx + dy * 8;
+					if (attackedSquare & allPieces)
+					{
+						if (attackedSquare & whitePieces)
+						{
+							for (unsigned int j = 1; j < 6; j++)
+							{
+								if (piecesArray[j] & attackedSquare)
+								{
+									candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+									break;
+								}
+							}
+						}
+						break;
+					}
+
+					candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+					dy--;
+				}
+
+				dx = x;
+				dy = y + 1;
+				attackedSquare = currentSquare;
+				//+y
+				while (dy < 8)
+				{
+					attackedSquare <<= 8;
+					p = dx + dy * 8;
+					if (attackedSquare & allPieces)
+					{
+						if (attackedSquare & whitePieces)
+						{
+							for (unsigned int j = 1; j < 6; j++)
+							{
+								if (piecesArray[j] & attackedSquare)
+								{
+									candidateMoves.push_back(Ply(i, p, true, false, j, 0));
+									break;
+								}
+							}
+						}
+						break;
+					}
+
+					candidateMoves.push_back(Ply(i, p, false, false, 0, 0));
+
+					dy++;
+				}
+			}
+			if (pieces.bKing & currentSquare)
+			{
+				int offsets[8] = { -9, -8, -7, -1, 1, 7, 8, 9 };
+				for (unsigned int k = 0; k < 8; k++)
+				{
+					int p = ((int)i + offsets[k]);
+
+					if (p < 64 && p >= 0)
+					{
+						int px = p % 8;
+						int py = p / 8;
+
+						if ((abs(px - x) == 1 && abs(py - y) == 1) || (abs(px - x) == 0 && abs(py - y) == 1) || (abs(px - x) == 1 && abs(py - y) == 0))
+						{
+							attackedSquare = (uint64_t)1 << p;
+							if (attackedSquare & whitePieces)
+							{
+								for (unsigned int j = 1; j < 6; j++)
+								{
+									if (piecesArray[j] & attackedSquare)
+									{
+										candidateMoves.push_back(Ply(i, (uint64_t)p, true, false, j, 0));
+										break;
+									}
+								}
+							}
+							else if (!(attackedSquare & allPieces))
+							{
+								candidateMoves.push_back(Ply(i, (uint64_t)p, false, false, 0, 0));
+							}
+						}
+					}
+				}
+			}
+
+			//next square
+			currentSquare <<= 1;
+		}
 		}
 
-		std::cout << "Found " << candidateMoves.size() << " candidate moves" << std::endl;
+		
+		//std::cout << "Found " << candidateMoves.size() << " candidate moves" << std::endl;
 		for (unsigned int i = 0; i < candidateMoves.size(); i++)
 		{
-			std::cout << candidateMoves.at(i);
+			//std::cout << candidateMoves.at(i);
+
+			//currently no checking of illegal checks and stuff
+			legalMoves.push_back(candidateMoves.at(i));
 		}
 	}
 }
