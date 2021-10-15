@@ -38,7 +38,7 @@ namespace Turbofan
 			uint64 queen, rook, bishop, knight, pawn;
 		};*/
 		//PlayerPieces white, black;
-
+	public:
 		struct Pieces
 		{
 			uint64_t wKing, wQueen, wRook, wBishop, wKnight, wPawn;

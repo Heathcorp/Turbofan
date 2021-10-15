@@ -17,6 +17,10 @@ namespace Turbofan
 
 			Ply lastPly;
 
+			float evaluation;
+		public:
+			Ply bestPly;
+
 			//bool locked;
 		public:
 			Node();
@@ -24,6 +28,8 @@ namespace Turbofan
 			~Node();
 
 			Node* AddChild(Ply ply);
+
+			float evaluate(uint16_t plyDepth, BoardState* board, bool isMyTurn);
 		};
 
 		Node* rootNode;

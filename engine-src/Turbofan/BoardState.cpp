@@ -231,12 +231,7 @@ namespace Turbofan
 		
 		bool isWhite = ((plyNumber+1) % 2);
 
-		/*union
-		{
-			BoardState::Pieces tempPieces;
-			uint64_t tempPieceArray[12];
-		};
-		tempPieces = pieces;*/
+		/**/
 
 		//working masks used multiple times
 		uint64_t attackedSquare;

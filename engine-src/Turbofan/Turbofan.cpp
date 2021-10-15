@@ -12,7 +12,7 @@ int main()
 
 	Turbofan::MoveTree testTree(testBoard);
 
-	Turbofan::Ply testPly(1, 18, false, false, 0, 0);
+	//Turbofan::Ply testPly(1, 18, false, false, 0, 0);
 	/*std::cout << sizeof(testPly) << std::endl;
 
 	testBoard.generateLegalMoves();
@@ -37,16 +37,22 @@ int main()
 	{
 		std::cout << "I am currently unable to play as black, I will play as white instead." << std::endl;
 	}
+
+	uint16_t depth = 1;
 	
+	Turbofan::MoveTree::Node* currentNode = testTree.rootNode;
+	currentNode->evaluate(depth, &testBoard, true);
 
 	Turbofan::Ply opponentMove;
-	Turbofan::Ply myMove;
-	testBoard.generateLegalMoves();
-	input = "illegal";
+	Turbofan::Ply myMove = currentNode->bestPly;
+	input = "test";
+	std::cout << "Play " << myMove << std::endl;
+
 	while (input != "exit")
 	{
 		if (input == "illegal")
 		{
+			testBoard.generateLegalMoves();
 			myMove = testBoard.legalMoves.at(rand() % testBoard.legalMoves.size());
 
 			std::cout << "Play " << myMove << std::endl;
@@ -54,17 +60,18 @@ int main()
 		else if (input.size() == 4 && input.at(0) >= 'a' && input.at(0) <= 'h' && input.at(1) >= '1' && input.at(1) <= '8' && input.at(2) >= 'a' && input.at(2) <= 'h' && input.at(3) >= '1' && input.at(3) <= '8')
 		{
 			testBoard.makeMove(myMove);
+			currentNode = currentNode->AddChild(myMove);
 
 			opponentMove.from = input.at(0) - 'a' + (input.at(1) - '1') * 8;
 			opponentMove.to = input.at(2) - 'a' + (input.at(3) - '1') * 8;
 
 			testBoard.makeMove(opponentMove);
+			currentNode = currentNode->AddChild(opponentMove);
 
 			std::cout << testBoard << std::endl;
 
-			testBoard.generateLegalMoves();
-
-			myMove = testBoard.legalMoves.at(rand() % testBoard.legalMoves.size());
+			currentNode->evaluate(depth, &testBoard, true);
+			myMove = currentNode->bestPly;
 
 			std::cout << "Play " << myMove << std::endl;
 			
